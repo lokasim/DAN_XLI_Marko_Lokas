@@ -23,6 +23,20 @@ namespace PrintDoc
         public MainWindow()
         {
             InitializeComponent();
+            notice.Text = "Notice: \nEnter the desired text in the text input field, " +
+                            "then the number of copies. " +
+                            "After you have done this, press the \"Print\" " +
+                            "button to start the document printing simulation.text input field...".ToString();
+        }
+
+        private void BtnPrint_Click(object sender, RoutedEventArgs e)
+        {
+            
+        }
+
+        private void BtnStopPrint_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }
