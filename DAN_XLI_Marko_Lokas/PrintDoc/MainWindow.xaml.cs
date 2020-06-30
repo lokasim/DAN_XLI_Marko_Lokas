@@ -56,6 +56,7 @@ namespace PrintDoc
         /// <param name="e"></param>
         private void BtnPrint_Click(object sender, RoutedEventArgs e)
         {
+            arrow.Visibility = Visibility.Collapsed;
             //If it is started, it prints a message that it has already started
             if (bw.IsBusy)
             {
