@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Media;
 using System.Text;
@@ -56,10 +57,15 @@ namespace PrintDoc
             
             if (bw.IsBusy)
             {
-                MessageBox.Show("Printing is already in progress. Please wait...");
+                MessageBox.Show("Printing is already in progress. Please wait...","Printing...", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
+                bw = new BackgroundWorker
+                {
+                    WorkerReportsProgress = true,
+                    WorkerSupportsCancellation = true
+                };
                 currentTextPanel = txtTextPanel.Text.ToString();
                 currentNumberCopies = txtNumOfCopies.Text.ToString();
 
@@ -90,19 +96,41 @@ namespace PrintDoc
             int percentage = 100 / Convert.ToInt32(numberCopiesString);
             for (int i = 0; i <= 100; i += percentage)
             {
+                Thread.Sleep(1000);
                 sumCopies = sumCopies + 1 ;
-                bw.ReportProgress(i);
-                //progressBar.Value = i;
+                if (i % 3 == 0)
+                {
+                    bw.ReportProgress(i);
+                    if (i == 99)
+                    {
+                        bw.ReportProgress(100);
+
+                    }
+                }
+                else
+                {
+                    bw.ReportProgress(i);
+
+                }
                 if (bw.CancellationPending)
                 {
                     e.Cancel = true;
                     bw.ReportProgress(0);
                     return;
                 }
-                bw.ReportProgress(i);
-                Thread.Sleep(1000);
-                
+                DateTime date = DateTime.Now;
+                string dateString = date.ToString("dd_MM_yyyy_hh_mm");
+                string nameDocument = @"..\..\Printed\" + sumCopies + "." + dateString + ".txt";
+
+                if (Convert.ToInt32(numberCopiesString) >= sumCopies)
+                {
+                    CreateCopies(nameDocument);
+
+                }
+
             }
+            //To always finish 100%
+            bw.ReportProgress(100);
             e.Result = "Finish printing";
         }
 
@@ -111,6 +139,7 @@ namespace PrintDoc
             if (e.Cancelled)
             {
                 lblProgressBar.Content = ("You canceled!");
+                sumCopies = 0;
             }
             else if (e.Error != null)
             {
@@ -118,14 +147,24 @@ namespace PrintDoc
             }
             else
             {
-                lblProgressBar.Content = ("Complete:  " + e.Result);
+                lblProgressBar.Content = ("Successfully completed: " + e.Result);
+                btnStopPrint.IsEnabled = false;
             }
         }
 
         private void bw_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             progressBar.Value = e.ProgressPercentage;
-            lblProgressBar.Content = "Printing copies" + sumCopies;
+            if (Convert.ToInt32(numberCopiesString) < sumCopies)
+            {
+                lblProgressBar.Content = "The printing process is soon over...";
+
+            }
+            else
+            {
+                lblProgressBar.Content = "Printing copies " + sumCopies;
+            }
+
             lblPercentage.Content  =  ("Completed " + e.ProgressPercentage + "%");
         }
 
@@ -136,6 +175,17 @@ namespace PrintDoc
                 bw.CancelAsync();
                 btnStopPrint.IsEnabled = false;
                 lblPercentage.Content = "Stopped the printing process...";
+            }
+        }
+        
+
+        private void CreateCopies(string location)
+        {
+            //File.Create(location);
+            using (StreamWriter outputFile = new StreamWriter(location))
+            {
+
+                outputFile.WriteLine(textPanelString.ToString());
             }
         }
 

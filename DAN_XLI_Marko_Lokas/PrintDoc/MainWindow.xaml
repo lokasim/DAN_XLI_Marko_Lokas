@@ -107,6 +107,7 @@
                             Width="130"
                             ToolTip="Print text"
                             x:Name="btnPrint"
+                            IsDefault="True"
                             Margin="0,10,20,0"
                             IsEnabled="{Binding Print}"
                             Click="BtnPrint_Click"
@@ -159,6 +160,7 @@
                            Grid.Row="1"
                            Margin="0,0,0,0"
                            FontSize="16"
+                           Foreground="White"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center">%</Label>
                     <Label x:Name="lblProgressBar"
