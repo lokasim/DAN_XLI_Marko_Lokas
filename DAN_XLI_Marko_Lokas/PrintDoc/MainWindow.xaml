@@ -191,6 +191,7 @@
                             materialDesign:ButtonProgressAssist.IsIndicatorVisible="True"
                             materialDesign:ButtonProgressAssist.IsIndeterminate="True"
                             Content="Stop printing" />
+                    
                     <TextBlock Grid.Column="1"
                                FontSize="15"
                                Foreground="MediumPurple"
