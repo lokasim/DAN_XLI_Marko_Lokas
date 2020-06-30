@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Media;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -25,6 +27,17 @@ namespace PrintDoc
     {
         public bool textPanel;
         public bool numberCopies;
+        static BackgroundWorker bw = new BackgroundWorker
+            {
+                WorkerReportsProgress = true,
+                WorkerSupportsCancellation = true
+            };
+    public string textPanelString;
+        public string numberCopiesString;
+        public string currentTextPanel;
+        public string currentNumberCopies;
+        public int sumCopies = 0;
+
 
         public MainWindow()
         {
@@ -32,19 +45,98 @@ namespace PrintDoc
 
             this.Language = XmlLanguage.GetLanguage("sr-SR");
             txtTextPanel.Focus();
+            notice.Visibility = Visibility.Visible;
             Print();
-
+            
 
         }
 
         private void BtnPrint_Click(object sender, RoutedEventArgs e)
         {
+            
+            if (bw.IsBusy)
+            {
+                MessageBox.Show("Printing is already in progress. Please wait...");
+            }
+            else
+            {
+                currentTextPanel = txtTextPanel.Text.ToString();
+                currentNumberCopies = txtNumOfCopies.Text.ToString();
 
+                textPanelString = currentTextPanel;
+                numberCopiesString = currentNumberCopies;
+
+                notice.Visibility = Visibility.Collapsed;
+
+
+                bw.DoWork += bw_DoWork;
+                bw.ProgressChanged += bw_ProgressChanged;
+                bw.RunWorkerCompleted += bw_RunWorkerCompleted;
+                bw.RunWorkerAsync();
+                btnStopPrint.IsEnabled = true;
+            }
+            
+
+            //bw.DoWork += bw_DoWork;
+            //bw.ProgressChanged += bw_ProgressChanged;
+            //bw.RunWorkerCompleted += bw_RunWorkerCompleted;
+            //bw.RunWorkerAsync("Hello to worker");
+            
+        }
+
+        private void bw_DoWork(object sender, DoWorkEventArgs e)
+        {
+            sumCopies = 0;
+            int percentage = 100 / Convert.ToInt32(numberCopiesString);
+            for (int i = 0; i <= 100; i += percentage)
+            {
+                sumCopies = sumCopies + 1 ;
+                bw.ReportProgress(i);
+                //progressBar.Value = i;
+                if (bw.CancellationPending)
+                {
+                    e.Cancel = true;
+                    bw.ReportProgress(0);
+                    return;
+                }
+                bw.ReportProgress(i);
+                Thread.Sleep(1000);
+                
+            }
+            e.Result = "Finish printing";
+        }
+
+        private void bw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Cancelled)
+            {
+                lblProgressBar.Content = ("You canceled!");
+            }
+            else if (e.Error != null)
+            {
+                lblProgressBar.Content = ("Worker exception: " + e.Error.ToString());
+            }
+            else
+            {
+                lblProgressBar.Content = ("Complete:  " + e.Result);
+            }
+        }
+
+        private void bw_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            progressBar.Value = e.ProgressPercentage;
+            lblProgressBar.Content = "Printing copies" + sumCopies;
+            lblPercentage.Content  =  ("Completed " + e.ProgressPercentage + "%");
         }
 
         private void BtnStopPrint_Click(object sender, RoutedEventArgs e)
         {
-
+            if (bw.IsBusy)
+            {
+                bw.CancelAsync();
+                btnStopPrint.IsEnabled = false;
+                lblPercentage.Content = "Stopped the printing process...";
+            }
         }
 
         private void InputText(object sender, TextChangedEventArgs e)
@@ -150,14 +242,14 @@ namespace PrintDoc
 
         public async void MaxNumberCopies()
         {
-            int trajanjePoruke = 5000;
+            int duration = 5000;
             if (txtNumOfCopies.Text.Length == 4 && txtNumOfCopies.IsFocused == true)
             {
                 SystemSounds.Hand.Play();
                 error.Text = "Maximum number of characters".ToString();
                 tbCapsLock.Visibility = Visibility.Visible;
 
-                await Task.Delay(trajanjePoruke);
+                await Task.Delay(duration);
                 tbCapsLock.Visibility = Visibility.Collapsed;
             }
         }
